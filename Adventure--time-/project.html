@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adventure Time – 3D Runner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+button {
+  padding: 12px 18px;
+  margin: 6px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  background: orange;
+  cursor: pointer;
+}
+
+/* GAME */
+#game {
+  position: relative;
+  max-width: 900px;
+  height: 300px;
+  margin: auto;
+  perspective: 800px; /* for 3D effect */
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+#background {
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(#4e4376,#2b5876);
+  z-index: 0;
+}
+
+#ground {
+  position: absolute;
+  bottom: 0;
+  height: 40px;
+  width: 200%;
+  background: #5a3a1a;
+  z-index: 1;
+}
+
+/* PLAYER */
+#player {
+  width: 48px;
+  height: 64px;
+  position: absolute;
+  bottom: 40px;
+  left: 80px;
+  transform-style: preserve-3d;
+  transform: rotateY(20deg); /* slight 3D tilt */
+  z-index: 2;
+  background-image: url("player3d.png"); /* 6-frame sprite */
+  background-size: 288px 64px;
+  box-shadow: 0 8px 10px rgba(0,0,0,0.5); /* depth shadow */
+  border: 2px solid #fff; /* outline for 3D look */
+  border-radius: 4px;
+}
+
+/* OBJECTS */
+.obstacle {
+  width: 30px;
+  height: 50px;
+  background: red;
+  position: absolute;
+  bottom: 40px;
+  z-index: 2;
+  transform: rotateY(15deg);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+}
+
+.coin {
+  width: 20px;
+  height: 20px;
+  background: gold;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 90px;
+  z-index: 2;
+  transform: rotateY(15deg);
+  box-shadow: 0 4px 4px rgba(0,0,0,0.5);
+}
+
+/* GAME OVER */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.box {
+  background: #222;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+<div id="gameScreen">
+  <h3>Score: <span id="score">0</span> | Coins: <span id="coinGame">0</span></h3>
+  <div id="game">
+    <div id="background"></div>
+    <div id="ground"></div>
+    <div id="player"></div>
+  </div>
+  <button onclick="jump()">⬆ Jump</button>
+</div>
+
+<div class="overlay" id="gameOver">
+  <div class="box">
+    <h2>Game Over</h2>
+    <p>Score: <span id="finalScore">0</span></p>
+    <button onclick="restart()">Restart</button>
+  </div>
+</div>
+
+<script>
+let score = 0;
+let coins = Number(localStorage.getItem("coins")) || 0;
+let speed = 5;
+let jumping = false;
+let y = 0;
+let frame = 0;
+
+const player = document.getElementById("player");
+const game = document.getElementById("game");
+const scoreUI = document.getElementById("score");
+const coinGame = document.getElementById("coinGame");
+const gameOver = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+const background = document.getElementById("background");
+const ground = document.getElementById("ground");
+
+/* PLAYER RUN ANIMATION */
+setInterval(()=>{
+  frame = (frame + 1) % 6;
+  player.style.backgroundPosition = `-${frame*48}px 0`;
+},100);
+
+/* JUMP */
+function jump(){
+  if(jumping) return;
+  jumping = true;
+  let up = setInterval(()=>{
+    if(y >= 120){
+      clearInterval(up);
+      let down = setInterval(()=>{
+        if(y <= 0){ clearInterval(down); jumping=false; y=0; player.style.bottom="40px"; }
+        y -= 5;
+        player.style.bottom = 40 + y + "px";
+      },20);
+    }
+    y += 5;
+    player.style.bottom = 40 + y + "px";
+  },20);
+}
+
+/* OBJECTS */
+function createObstacle(){
+  let o = document.createElement("div");
+  o.className = "obstacle";
+  o.style.right = "0px";
+  o.style.bottom = "40px";
+  o.style.height = `${40 + Math.random()*20}px`;
+  game.appendChild(o);
+}
+
+function createCoin(){
+  let c = document.createElement("div");
+  c.className = "coin";
+  c.style.right = "0px";
+  c.style.bottom = `${80 + Math.random()*60}px`;
+  game.appendChild(c);
+}
+
+function moveObjects(){
+  document.querySelectorAll(".obstacle,.coin").forEach(el=>{
+    el.style.right = (parseInt(el.style.right) + speed) + "px";
+    if(parseInt(el.style.right) > 900) el.remove();
+  });
+}
+
+function scrollBackground(){
+  let bgPos = parseInt(getComputedStyle(background).left) || 0;
+  bgPos -= speed/2;
+  if(bgPos <= -900) bgPos = 0;
+  background.style.left = bgPos + "px";
+
+  let groundPos = parseInt(getComputedStyle(ground).left) || 0;
+  groundPos -= speed;
+  if(groundPos <= -900) groundPos = 0;
+  ground.style.left = groundPos + "px";
+}
+
+function hit(a,b){
+  let A = a.getBoundingClientRect(), B = b.getBoundingClientRect();
+  return !(A.right < B.left || A.left > B.right || A.bottom < B.top || A.top > B.bottom);
+}
+
+function detectCollisions(){
+  document.querySelectorAll(".obstacle").forEach(o=>{
+    if(hit(player,o)) fail();
+  });
+  document.querySelectorAll(".coin").forEach(c=>{
+    if(hit(player,c)){
+      coins++; localStorage.setItem("coins",coins);
+      updateUI(); c.remove();
+    }
+  });
+}
+
+function updateUI(){
+  scoreUI.textContent = score;
+  coinGame.textContent = coins;
+}
+
+function startGame(){
+  clearAll();
+  score = 0;
+  speed = 5;
+  updateUI();
+
+  obstacleLoop = setInterval(createObstacle, 1500 + Math.random()*1000);
+  coinLoop = setInterval(createCoin, 2000 + Math.random()*1000);
+  moveLoop = setInterval(()=>{
+    moveObjects();
+    detectCollisions();
+    score++;
+    if(score % 200 === 0) speed += 0.5;
+    updateUI();
+  }, 20);
+  backgroundLoop = setInterval(scrollBackground, 20);
+}
+
+function fail(){
+  clearAll();
+  finalScore.textContent = score;
+  gameOver.style.display = "flex";
+}
+
+function restart(){
+  gameOver.style.display = "none";
+  startGame();
+}
+
+function clearAll(){
+  clearInterval(obstacleLoop);
+  clearInterval(coinLoop);
+  clearInterval(moveLoop);
+  clearInterval(backgroundLoop);
+  document.querySelectorAll(".obstacle,.coin").forEach(e=>e.remove());
+}
+
+document.addEventListener("keydown", e=>{
+  if(e.code === "Space") jump();
+});
+
+startGame();
+</script>
+
+</body>
+</html>
