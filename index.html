@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Adventure Time – Jungle Run</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h1 { margin: 8px; }
+
+#topBar {
+  display: flex;
+  justify-content: space-between;
+  max-width: 800px;
+  margin: auto;
+  padding: 0 10px;
+}
+
+#game {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: 320px;
+  margin: auto;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* 🌴 PARALLAX JUNGLE */
+.layer {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-x;
+}
+
+#far {
+  background: linear-gradient(#013220, #025928);
+  animation: move 40s linear infinite;
+}
+
+#mid {
+  background: repeating-linear-gradient(
+    90deg,
+    #0b3d2e,
+    #0b3d2e 60px,
+    #145a32 60px,
+    #145a32 120px
+  );
+  animation: move 20s linear infinite;
+}
+
+#near {
+  background: repeating-linear-gradient(
+    90deg,
+    #2e1b0f,
+    #2e1b0f 40px,
+    #3d2817 40px,
+    #3d2817 80px
+  );
+  animation: move 10s linear infinite;
+}
+
+@keyframes move {
+  from { background-position-x: 0; }
+  to { background-position-x: -800px; }
+}
+
+/* Ground */
+.ground {
+  position: absolute;
+  bottom: 0;
+  height: 50px;
+  width: 100%;
+  background: #3b2f1c;
+  z-index: 4;
+}
+
+/* Player */
+#player {
+  position: absolute;
+  bottom: 50px;
+  font-size: 46px;
+  z-index: 10;
+  transition: left 0.5s;
+  animation: run 0.5s infinite alternate;
+}
+
+@keyframes run {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+/* Jump */
+.jump {
+  animation: jump 0.8s ease-out;
+}
+
+@keyframes jump {
+  0% { bottom: 50px; }
+  50% { bottom: 160px; }
+  100% { bottom: 50px; }
+}
+
+/* Obstacles */
+.obstacle {
+  position: absolute;
+  bottom: 50px;
+  width: 10px;
+  height: 30px;
+  background: red;
+  border-radius: 6px;
+  z-index: 6;
+}
+
+/* Game over */
+#gameOver {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 26px;
+  z-index: 20;
+}
+
+/* JUMP BUTTON */
+#jumpBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 18px 26px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 50%;
+  border: none;
+  background: #1abc9c;
+  color: #000;
+  box-shadow: 0 6px 0 #0e6655;
+  cursor: pointer;
+  z-index: 100;
+}
+
+#jumpBtn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #0e6655;
+}
+
+/* Sound button styling */
+#soundBtn {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #1abc9c;
+  color: #000;
+  cursor: pointer;
+}
+#volumeControls button {
+  margin: 0 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #f1c40f;
+  color: #000;
+  cursor: pointer;
+}
+/* RESPONSIVE DESIGN */
+@media (max-width: 600px) {
+  #game {
+    height: 220px;
+  }
+
+  #player {
+    font-size: 36px;
+  }
+
+  #jumpBtn {
+    padding: 14px 20px;
+    font-size: 16px;
+    bottom: 15px;
+    right: 15px;
+  }
+
+  #score {
+    font-size: 16px;
+  }
+
+  #soundBtn, #volumeControls button {
+    padding: 4px 8px;
+    font-size: 14px;
+  }
+
+  .obstacle {
+    width: 8px;
+    height: 25px;
+  }
+}
+
+@media (min-width: 1200px) {
+  #game {
+    max-width: 1200px;
+    height: 400px;
+  }
+
+  #player {
+    font-size: 60px;
+  }
+
+  .obstacle {
+    width: 15px;
+    height: 40px;
+  }
+
+  #jumpBtn {
+    padding: 22px 30px;
+    font-size: 20px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🌴 Jungle Run</h1>
+
+<div id="topBar">
+  <div id="score">Score: 0</div>
+  <button id="soundBtn">🔊 Sound ON</button>
+  <div id="volumeControls" style="margin: 10px;">
+  <button id="volUp">🔊 Volume +</button>
+  <button id="volDown">🔉 Volume -</button>
+</div>
+
+</div>
+
+<div id="game">
+  <div id="far" class="layer"></div>
+  <div id="mid" class="layer"></div>
+  <div id="near" class="layer"></div>
+
+  <div id="player">🐌</div>
+  <div class="ground"></div>
+
+  <div id="gameOver">
+    <p>💥 Game Over</p>
+    <button onclick="location.reload()">Restart</button>
+  </div>
+</div>
+
+<button id="jumpBtn">SPACE</button>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop src="Danger Dash music ( From Itel2163 ) - Keypad Games.mp3"></audio>
+<audio id="jumpSound" src="jump.mp3"></audio>
+<audio id="hitSound" src="SUPER MARIO - game over - sound effect - Super Mario Broz.mp3"></audio>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreText = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+
+const bgMusic = document.getElementById("bgMusic");
+const jumpSound = document.getElementById("jumpSound");
+const hitSound = document.getElementById("hitSound");
+const soundBtn = document.getElementById("soundBtn");
+
+let lanes = [120, 260, 400];
+let laneIndex = 1;
+player.style.left = lanes[laneIndex] + "px";
+
+let score = 0;
+let speed = 5;
+let gameOver = false;
+let soundOn = true;
+let musicStarted = false;
+let isJumping = false;
+let groundLevel = 50;
+
+// ===== START MUSIC =====
+function startMusic() {
+  if (!musicStarted && soundOn) {
+    bgMusic.volume = 0.4;
+    bgMusic.play();
+    musicStarted = true;
+  }
+}
+
+// ===== JUMP FUNCTION =====
+function jump() {
+  if (isJumping || gameOver) return;
+  startMusic();
+
+  if (soundOn) jumpSound.play();
+
+  isJumping = true;
+  let height = 0;
+  const jumpUp = setInterval(() => {
+    height += 10;
+    player.style.bottom = groundLevel + height + "px";
+
+    if (height >= 120) {
+      clearInterval(jumpUp);
+
+      const fallDown = setInterval(() => {
+        height -= 10;
+        player.style.bottom = groundLevel + height + "px";
+
+        if (height <= 0) {
+          clearInterval(fallDown);
+          player.style.bottom = groundLevel + "px";
+          isJumping = false;
+        }
+      }, 20);
+    }
+  }, 20);
+}
+
+// ===== LANE MOVEMENT =====
+function moveLeft() {
+  if (laneIndex > 0) laneIndex--;
+  player.style.left = lanes[laneIndex] + "px";
+}
+
+function moveRight() {
+  if (laneIndex < 2) laneIndex++;
+  player.style.left = lanes[laneIndex] + "px";
+}
+
+// ===== SPAWN OBSTACLES =====
+function createObstacle() {
+  if (gameOver) return;
+
+  const o = document.createElement("div");
+  o.className = "obstacle";
+  o.style.left = lanes[Math.floor(Math.random() * 3)] + "px";
+  let x = game.offsetWidth;
+  game.appendChild(o);
+
+  const move = setInterval(() => {
+    if (gameOver) return;
+    x -= speed;
+    o.style.left = x + "px";
+
+    const p = player.getBoundingClientRect();
+    const r = o.getBoundingClientRect();
+
+    if (p.left < r.right && p.right > r.left && p.bottom > r.top) {
+      endGame();
+    }
+
+    if (x < -50) {
+      clearInterval(move);
+      o.remove();
+    }
+  }, 20);
+}
+
+// Spawn obstacles repeatedly
+setInterval(createObstacle, 1600);
+
+// ===== SCORE =====
+setInterval(() => {
+  if (!gameOver) {
+    score++;
+    scoreText.textContent = "Score: " + score;
+    if (score % 120 === 0) speed++;
+  }
+}, 100);
+
+// ===== GAME OVER =====
+function endGame() {
+  gameOver = true;
+  bgMusic.pause();
+  if (soundOn) hitSound.play();
+  player.style.animationPlayState = "paused";
+  gameOverScreen.style.display = "flex";
+}
+
+// ===== CONTROLS =====
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") jump();
+  if (e.code === "ArrowLeft") moveLeft();
+  if (e.code === "ArrowRight") moveRight();
+});
+
+document.getElementById("jumpBtn").addEventListener("click", jump);
+
+// Swipe controls
+let startX = 0;
+game.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+game.addEventListener("touchend", e => {
+  let diff = e.changedTouches[0].clientX - startX;
+  if (Math.abs(diff) > 40) diff > 0 ? moveRight() : moveLeft();
+});
+
+// ===== SOUND TOGGLE =====
+soundBtn.onclick = () => {
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "🔊 Sound ON" : "🔇 Sound OFF";
+  if (!soundOn) bgMusic.pause();
+  else if (musicStarted) bgMusic.play();
+};
+let bgVolume = 0.4; // initial background music volume
+let effectsVolume = 1; // jump & hit sound volume
+
+bgMusic.volume = bgVolume;
+jumpSound.volume = effectsVolume;
+hitSound.volume = effectsVolume;
+
+const volUpBtn = document.getElementById("volUp");
+const volDownBtn = document.getElementById("volDown");
+
+// Increase volume
+volUpBtn.onclick = () => {
+  bgVolume = Math.min(1, bgVolume + 0.1);
+  effectsVolume = Math.min(1, effectsVolume + 0.1);
+  bgMusic.volume = bgVolume;
+  jumpSound.volume = effectsVolume;
+  hitSound.volume = effectsVolume;
+};
+
+// Decrease volume
+volDownBtn.onclick = () => {
+  bgVolume = Math.max(0, bgVolume - 0.1);
+  effectsVolume = Math.max(0, effectsVolume - 0.1);
+  bgMusic.volume = bgVolume;
+  jumpSound.volume = effectsVolume;
+  hitSound.volume = effectsVolume;
+};
+
+</script>
+
+</body>
+</html>
